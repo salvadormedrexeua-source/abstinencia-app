@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.salvadormedrexeua_source.twa",
+        "sha256_cert_fingerprints": ["20:C9:A9:11:35:9E:9D:CF:C6:6F:82:93:01:3C:02:6A:CB:6A:FF:07:72:DD:DC:28:47:25:F9:A8:84:8C:45:21"]
+      }
+    }]
