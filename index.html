@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F6E56">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Abstinencia $">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Plan de Abstinencia Financiera</title>
+<style>
+  :root {
+    --green: #0F6E56;
+    --green-light: #E1F5EE;
+    --green-mid: #1D9E75;
+    --green-dark: #085041;
+    --amber: #EF9F27;
+    --amber-light: #FAEEDA;
+    --amber-dark: #633806;
+    --gray: #888780;
+    --gray-light: #F1EFE8;
+    --gray-lighter: #f8f8f6;
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --red-dark: #A32D2D;
+    --text: #2C2C2A;
+    --text-muted: #5F5E5A;
+    --text-light: #888780;
+    --border: rgba(0,0,0,0.08);
+    --border-mid: rgba(0,0,0,0.14);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --bg: #ffffff;
+    --bg-surface: #f8f8f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg-surface); }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--text); }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; background: var(--bg); box-shadow: 0 0 40px rgba(0,0,0,0.08); }
+
+  /* ── TOP BAR ── */
+  .topbar { background: var(--green); color: white; padding: env(safe-area-inset-top, 0) 0 0; flex-shrink: 0; }
+  .topbar-inner { padding: 16px 20px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+  .topbar-sub { font-size: 12px; opacity: 0.8; margin-top: 1px; }
+  .topbar-icon { width: 38px; height: 38px; background: rgba(255,255,255,0.18); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+  /* ── STATS BAR ── */
+  .stats-bar { display: grid; grid-template-columns: repeat(4,1fr); background: var(--green-dark); padding: 10px 12px; gap: 6px; flex-shrink: 0; }
+  .stat { text-align: center; }
+  .stat-val { font-size: 20px; font-weight: 700; color: white; line-height: 1; }
+  .stat-label { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .tab { flex: 1; padding: 12px 4px; font-size: 12px; font-weight: 500; color: var(--text-light); text-align: center; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tab svg { width: 18px; height: 18px; }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+  /* ── SCROLL AREA ── */
+  .scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* ── VIEWS ── */
+  .view { display: none; padding: 0 0 100px; }
+  .view.active { display: block; }
+
+  /* ── FORM VIEW ── */
+  .form-section { padding: 16px 16px 0; }
+  .form-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
+  .form-card-header { background: var(--green-light); padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--green-dark); display: flex; align-items: center; gap: 8px; }
+  .form-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input, .field select, .field textarea {
+    font-size: 15px; padding: 11px 14px;
+    border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
+    background: var(--bg-surface); color: var(--text);
+    outline: none; width: 100%; font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green); background: white; }
+  .field textarea { resize: none; height: 80px; line-height: 1.5; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-primary {
+    background: var(--green); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 14px 20px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    width: 100%; font-family: inherit; letter-spacing: -0.1px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s; -webkit-appearance: none;
+  }
+  .btn-primary:active { background: var(--green-dark); transform: scale(0.98); }
+
+  /* ── LIST VIEW ── */
+  .list-filters { padding: 12px 16px 8px; display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .list-filters::-webkit-scrollbar { display: none; }
+  .filter-pill { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border-mid); background: var(--bg); color: var(--text-muted); transition: all 0.15s; user-select: none; }
+  .filter-pill.active { background: var(--green); color: white; border-color: var(--green); }
+
+  .items-wrap { padding: 4px 16px; }
+  .item-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+  .item-card.status-active { border-left: 4px solid var(--amber); }
+  .item-card.status-passed { border-left: 4px solid var(--green-mid); }
+  .item-card.status-abandoned { border-left: 4px solid var(--border-mid); opacity: 0.6; }
+
+  .card-top { padding: 14px 14px 10px; }
+  .card-row1 { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .card-name { font-size: 16px; font-weight: 600; color: var(--text); line-height: 1.3; flex: 1; margin-right: 10px; }
+  .card-price { font-size: 16px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .meta-tag { font-size: 11px; color: var(--text-light); display: flex; align-items: center; gap: 3px; background: var(--gray-light); padding: 3px 8px; border-radius: 10px; }
+  .badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 10px; white-space: nowrap; }
+  .badge-active { background: var(--amber-light); color: var(--amber-dark); }
+  .badge-passed { background: var(--green-light); color: var(--green-dark); }
+  .badge-abandoned { background: var(--gray-light); color: var(--gray); }
+
+  .card-reason { font-size: 13px; color: var(--text-muted); line-height: 1.5; padding: 0 14px 10px; font-style: italic; }
+
+  .progress-section { padding: 0 14px 12px; }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-light); margin-bottom: 5px; }
+  .progress-track { height: 6px; background: var(--gray-light); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+
+  .card-actions { display: flex; border-top: 1px solid var(--border); }
+  .act-btn { flex: 1; padding: 12px 8px; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; border: none; background: none; font-family: inherit; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .act-btn:not(:last-child) { border-right: 1px solid var(--border); }
+  .act-btn.green { color: var(--green); }
+  .act-btn.green:active { background: var(--green-light); }
+  .act-btn.red { color: var(--red); }
+  .act-btn.red:active { background: var(--red-light); }
+  .act-btn.gray { color: var(--text-light); }
+  .act-btn.gray:active { background: var(--gray-light); }
+
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--text-light); }
+  .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* ── RESUMEN VIEW ── */
+  .resumen-section { padding: 16px; }
+  .resumen-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .resumen-card h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px; }
+  .money-big { font-size: 36px; font-weight: 700; color: var(--green); }
+  .money-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .resumen-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .resumen-row:last-child { border-bottom: none; }
+  .resumen-label { font-size: 14px; color: var(--text-muted); }
+  .resumen-val { font-size: 14px; font-weight: 600; color: var(--text); }
+  .tip-card { background: var(--green-light); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
+  .tip-card p { font-size: 13px; color: var(--green-dark); line-height: 1.6; }
+  .tip-card strong { font-weight: 700; }
+
+  /* ── FAB ── */
+  .fab { position: fixed; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); right: calc(50% - 240px + 16px); width: 52px; height: 52px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(15,110,86,0.4); cursor: pointer; transition: transform 0.15s; z-index: 10; }
+  .fab:active { transform: scale(0.92); }
+  .fab svg { width: 24px; height: 24px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  @media (max-width: 480px) { .fab { right: 16px; } }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav { flex-shrink: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 0 0 env(safe-area-inset-bottom, 0); display: flex; }
+  .nav-item { flex: 1; padding: 10px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; user-select: none; transition: color 0.15s; color: var(--text-light); font-size: 10px; font-weight: 500; }
+  .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .nav-item.active { color: var(--green); }
+
+  /* ── MODAL ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 0 0 env(safe-area-inset-bottom, 16px); max-height: 85dvh; overflow-y: auto; animation: slideUp 0.25s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border-mid); border-radius: 4px; margin: 12px auto 16px; }
+  .modal-title { font-size: 17px; font-weight: 700; padding: 0 20px 16px; }
+  .modal-body { padding: 0 20px 20px; }
+  .modal-actions { display: flex; flex-direction: column; gap: 10px; padding: 0 20px 4px; }
+  .btn-modal { padding: 14px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; text-align: center; transition: opacity 0.15s; }
+  .btn-modal:active { opacity: 0.8; }
+  .btn-modal.primary { background: var(--green); color: white; }
+  .btn-modal.danger { background: var(--red-light); color: var(--red-dark); }
+  .btn-modal.secondary { background: var(--gray-light); color: var(--text-muted); }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: #2C2C2A; color: white; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; opacity: 0; transition: all 0.3s; z-index: 200; white-space: nowrap; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="topbar h1" style="font-size:17px;font-weight:700;color:white">💰 Abstinencia Financiera</div>
+        <div class="topbar-sub">Si en 30 días lo quieres, lo mereces</div>
+      </div>
+    </div>
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat"><div class="stat-val" id="s-total">0</div><div class="stat-label">Total</div></div>
+      <div class="stat"><div class="stat-val" id="s-active">0</div><div class="stat-label">En espera</div></div>
+      <div class="stat"><div class="stat-val" id="s-passed">0</div><div class="stat-label">30 días ✓</div></div>
+      <div class="stat"><div class="stat-val" id="s-saved">$0</div><div class="stat-label">Ahorrado</div></div>
+    </div>
+  </div>
+
+  <!-- SCROLL -->
+  <div class="scroll">
+
+    <!-- VIEW: AGREGAR -->
+    <div class="view active" id="view-add">
+      <div class="form-section">
+        <div class="form-card">
+          <div class="form-card-header">
+            <span>📝</span> Registrar nuevo antojo
+          </div>
+          <div class="form-body">
+            <div class="field">
+              <label>Producto</label>
+              <input type="text" id="f-nombre" placeholder="¿Qué quieres comprar?" autocomplete="off">
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Precio</label>
+                <input type="text" id="f-precio" placeholder="Ej. $1,200" autocomplete="off">
+              </div>
+              <div class="field">
+                <label>Categoría</label>
+                <select id="f-cat">
+                  <option>👟 Ropa / calzado</option>
+                  <option>📱 Tecnología</option>
+                  <option>🔧 Herramienta</option>
+                  <option>🍔 Comida / antojo</option>
+                  <option>🎮 Entretenimiento</option>
+                  <option>🏠 Hogar</option>
+                  <option>💼 Negocio</option>
+                  <option>✨ Otro</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Día que lo vi</label>
+              <input type="date" id="f-fecha">
+            </div>
+            <div class="field">
+              <label>¿Por qué lo quiero?</label>
+              <textarea id="f-razon" placeholder="Sé honesto: ¿necesidad real o impulso del momento?"></textarea>
+            </div>
+            <button class="btn-primary" onclick="agregarItem()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 5v14M5 12h14"/></svg>
+              Agregar al radar de 30 días
+            </button>
+          </div>
+        </div>
+
+        <div class="tip-card">
+          <p><strong>💡 Regla de oro:</strong> Si todavía lo quieres después de 30 días completos, entonces no es un impulso — es una decisión consciente. Solo entonces compras.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: LISTA -->
+    <div class="view" id="view-lista">
+      <div class="list-filters" id="filtros">
+        <div class="filter-pill active" data-f="todos" onclick="setFiltro(this)">Todos</div>
+        <div class="filter-pill" data-f="active" onclick="setFiltro(this)">⏳ En espera</div>
+        <div class="filter-pill" data-f="passed" onclick="setFiltro(this)">✅ 30 días</div>
+        <div class="filter-pill" data-f="abandoned" onclick="setFiltro(this)">❌ Descartados</div>
+      </div>
+      <div class="items-wrap" id="lista"></div>
+    </div>
+
+    <!-- VIEW: RESUMEN -->
+    <div class="view" id="view-resumen">
+      <div class="resumen-section">
+        <div class="resumen-card">
+          <h3>💸 Dinero que NO gasté</h3>
+          <div class="money-big" id="r-ahorrado">$0</div>
+          <div class="money-sub" id="r-ahorrado-sub">De artículos descartados</div>
+        </div>
+
+        <div class="resumen-card">
+          <h3>📊 Mis estadísticas</h3>
+          <div class="resumen-row">
+            <span class="resumen-label">Antojos registrados</span>
+            <span class="resumen-val" id="r-total">0</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">En espera (activos)</span>
+            <span class="resumen-val" id="r-active">0</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Completaron 30 días</span>
+            <span class="resumen-val" id="r-passed">0</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Descartados (impulsos)</span>
+            <span class="resumen-val" id="r-abandoned">0</span>
+          </div>
+          <div class="resumen-row">
+            <span class="resumen-label">Tasa de impulso controlado</span>
+            <span class="resumen-val" id="r-rate" style="color:var(--green)">—</span>
+          </div>
+        </div>
+
+        <div class="tip-card">
+          <p><strong>🎯 Tu poder de decisión:</strong> Cada artículo descartado es prueba de que tú controlas el dinero, no al revés. Cada peso ahorrado es un ladrillo de tu futuro.</p>
+        </div>
+
+        <div class="resumen-card">
+          <h3>🗑️ Datos</h3>
+          <button class="btn-modal danger" style="width:100%;margin-top:4px" onclick="confirmarBorrar()">Borrar todos los registros</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /scroll -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-add" onclick="switchView('add')">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Agregar
+    </div>
+    <div class="nav-item" id="nav-lista" onclick="switchView('lista')">
+      <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      Mis Antojos
+    </div>
+    <div class="nav-item" id="nav-resumen" onclick="switchView('resumen')">
+      <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Resumen
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE DECISIÓN -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Decisión</div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+let items = JSON.parse(localStorage.getItem('abs_v2') || '[]');
+let filtroActual = 'todos';
+let currentView = 'add';
+
+function save(){ localStorage.setItem('abs_v2', JSON.stringify(items)); }
+
+function daysElapsed(dateStr){
+  const d = new Date(dateStr + 'T12:00:00');
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function getStatus(item){
+  if(item.abandoned) return 'abandoned';
+  return daysElapsed(item.fecha) >= 30 ? 'passed' : 'active';
+}
+
+function parseMoney(str){
+  if(!str) return 0;
+  const n = parseFloat(str.replace(/[^0-9.]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+
+function formatMoney(n){
+  return '$' + n.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────
+function updateStats(){
+  const total = items.length;
+  const active = items.filter(i => getStatus(i)==='active').length;
+  const passed = items.filter(i => getStatus(i)==='passed').length;
+  const abandoned = items.filter(i => i.abandoned).length;
+  const savedAmt = items.filter(i => i.abandoned).reduce((s,i)=>s+parseMoney(i.precio),0);
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-active').textContent = active;
+  document.getElementById('s-passed').textContent = passed;
+  document.getElementById('s-saved').textContent = savedAmt>0 ? formatMoney(savedAmt) : '$0';
+
+  document.getElementById('r-total').textContent = total;
+  document.getElementById('r-active').textContent = active;
+  document.getElementById('r-passed').textContent = passed;
+  document.getElementById('r-abandoned').textContent = abandoned;
+  const rate = (total>0) ? Math.round((abandoned/total)*100)+'%' : '—';
+  document.getElementById('r-rate').textContent = rate;
+  document.getElementById('r-ahorrado').textContent = formatMoney(savedAmt);
+  document.getElementById('r-ahorrado-sub').textContent = abandoned > 0
+    ? `De ${abandoned} artículo${abandoned>1?'s':''} que no compraste`
+    : 'Empieza a registrar antojos';
+}
+
+// ── AGREGAR ───────────────────────────────────────────────────────────
+function agregarItem(){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const precio = document.getElementById('f-precio').value.trim();
+  const fecha  = document.getElementById('f-fecha').value;
+  const razon  = document.getElementById('f-razon').value.trim();
+  const cat    = document.getElementById('f-cat').value;
+
+  if(!nombre){ showToast('Escribe el nombre del producto'); return; }
+  if(!fecha){  showToast('Selecciona la fecha'); return; }
+
+  items.unshift({ id: Date.now(), nombre, precio, fecha, razon, cat, abandoned: false, decision: '' });
+  save();
+  document.getElementById('f-nombre').value = '';
+  document.getElementById('f-precio').value = '';
+  document.getElementById('f-razon').value = '';
+  showToast('✅ Antojo registrado — empieza el conteo de 30 días');
+  updateStats();
+  renderLista();
+}
+
+// ── LISTA ─────────────────────────────────────────────────────────────
+function setFiltro(el){
+  filtroActual = el.dataset.f;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderLista();
+}
+
+function renderLista(){
+  updateStats();
+  let visible = filtroActual === 'todos' ? items : items.filter(i => getStatus(i) === filtroActual);
+  const container = document.getElementById('lista');
+  if(!visible.length){
+    const msgs = {
+      todos: 'Aún no tienes antojos registrados.<br>¡Empieza agregando uno!',
+      active: 'No tienes antojos en espera.',
+      passed: 'Ningún antojo ha completado 30 días aún.',
+      abandoned: 'No has descartado ningún artículo.'
+    };
+    container.innerHTML = `<div class="empty-state"><div class="emoji">🙌</div><p>${msgs[filtroActual]||''}</p></div>`;
+    return;
+  }
+  container.innerHTML = visible.map(item => {
+    const status = getStatus(item);
+    const days = daysElapsed(item.fecha);
+    const daysLeft = Math.max(0, 30 - days);
+    const pct = Math.min(100, Math.round((Math.min(days,30)/30)*100));
+    const barColor = status==='passed' ? '#1D9E75' : status==='abandoned' ? '#B4B2A9' : '#EF9F27';
+
+    const badge = status==='passed'
+      ? `<span class="badge badge-passed">✅ 30 días OK</span>`
+      : status==='abandoned'
+      ? `<span class="badge badge-abandoned">❌ Descartado</span>`
+      : `<span class="badge badge-active">⏳ ${daysLeft}d restantes</span>`;
+
+    const actions = status==='active' ? `
+      <button class="act-btn green" onclick="openDecision(${item.id},'passed_decide')">✅ Decidir</button>
+      <button class="act-btn red" onclick="accionItem(${item.id},'abandon')">❌ Ya no quiero</button>
+      <button class="act-btn gray" onclick="accionItem(${item.id},'delete')">🗑️</button>`
+    : status==='passed' ? `
+      <button class="act-btn green" onclick="openDecision(${item.id},'buy')">🛒 Comprar</button>
+      <button class="act-btn red" onclick="accionItem(${item.id},'abandon')">❌ Ya pasó</button>
+      <button class="act-btn gray" onclick="accionItem(${item.id},'delete')">🗑️</button>`
+    : `<button class="act-btn gray" style="flex:1">${item.decision||'Descartado'}</button>
+       <button class="act-btn gray" onclick="accionItem(${item.id},'delete')">🗑️</button>`;
+
+    return `
+    <div class="item-card status-${status}" id="card-${item.id}">
+      <div class="card-top">
+        <div class="card-row1">
+          <div class="card-name">${item.nombre}</div>
+          <div class="card-price">${item.precio||'—'}</div>
+        </div>
+        <div class="card-meta">
+          ${badge}
+          <span class="meta-tag">📅 Día ${Math.min(days,30)}/30</span>
+          <span class="meta-tag">${item.cat}</span>
+        </div>
+      </div>
+      ${item.razon ? `<div class="card-reason">"${item.razon}"</div>` : ''}
+      <div class="progress-section">
+        <div class="progress-labels"><span>Abstinencia</span><span>${pct}%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      </div>
+      <div class="card-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+function accionItem(id, accion){
+  const item = items.find(i => i.id === id);
+  if(!item) return;
+  if(accion === 'delete'){
+    if(!confirm('¿Eliminar este registro?')) return;
+    items = items.filter(i => i.id !== id);
+    showToast('Registro eliminado');
+  } else if(accion === 'abandon'){
+    item.abandoned = true;
+    item.decision = 'Impulso superado ✓';
+    showToast('💪 ¡Bien hecho! Impulso controlado');
+  }
+  save(); renderLista();
+}
+
+function openDecision(id, tipo){
+  const item = items.find(i => i.id === id);
+  if(!item) return;
+  const days = daysElapsed(item.fecha);
+  document.getElementById('modal-title').textContent = item.nombre;
+
+  if(tipo === 'passed_decide'){
+    document.getElementById('modal-body').innerHTML = `
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:16px">
+        Llevas <strong>${days} días</strong> con este antojo. ¿Todavía lo quieres?<br><br>
+        Recuerda: aún no han pasado los 30 días. Si lo descartas ahora, es porque ya sabes que fue un impulso.
+      </p>`;
+    document.getElementById('modal-actions').innerHTML = `
+      <button class="btn-modal danger" onclick="accionItem(${id},'abandon');closeModal()">❌ Era un impulso — descartarlo</button>
+      <button class="btn-modal secondary" onclick="closeModal()">⏳ Seguir esperando</button>`;
+  } else if(tipo === 'buy'){
+    document.getElementById('modal-body').innerHTML = `
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:16px">
+        ✅ Han pasado <strong>${days} días</strong>. Completaste la prueba.<br><br>
+        Si decides comprarlo ahora, es una <strong>decisión consciente</strong>, no un impulso. ¿Qué decides?
+      </p>`;
+    document.getElementById('modal-actions').innerHTML = `
+      <button class="btn-modal primary" onclick="confirmarCompra(${id})">🛒 Comprar con consciencia</button>
+      <button class="btn-modal danger" onclick="accionItem(${id},'abandon');closeModal()">❌ Ya no lo necesito</button>
+      <button class="btn-modal secondary" onclick="closeModal()">Cancelar</button>`;
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function confirmarCompra(id){
+  const item = items.find(i => i.id === id);
+  if(item){ item.decision = '✓ Compra consciente'; save(); renderLista(); }
+  closeModal();
+  showToast('🎯 Compra consciente registrada');
+}
+
+function confirmarBorrar(){
+  if(confirm('¿Seguro? Se borrarán TODOS los registros.')){
+    items = []; save(); renderLista();
+    showToast('Datos borrados');
+  }
+}
+
+function closeModal(e){
+  if(!e || e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ── VIEWS ─────────────────────────────────────────────────────────────
+function switchView(v){
+  currentView = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  document.getElementById('nav-' + v).classList.add('active');
+  if(v === 'lista') renderLista();
+  if(v === 'resumen') updateStats();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+updateStats();
+
+// Register Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
